@@ -1,0 +1,42 @@
+#circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+#circle-border {
+  position: absolute;
+}
+
+#circle-logo {
+  position: absolute;
+  pointer-events: none;
+  top: 3em;
+  left: 6em;
+  width: 8em;
+  height: 5.0787096774em;
+}
+
+.home-circle #circle-status {
+  position: absolute;
+  font-size: 2em;
+  width: 10em;
+  top: 4.5em;
+  text-align: center;
+  color: white;
+}
+
+.login-circle #password {
+  position: absolute;
+  font-size: 1em;
+  top: 10em;
+  left: 4em;
+  width: 11em;
+  height: 2em;
+  border-radius: 0.5em;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  color: #777;
+}

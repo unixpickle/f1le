@@ -1,0 +1,16 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #65bcd4;
+}
+
+#pentagons {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+textarea:focus, input:focus{
+    outline: 0;
+}
