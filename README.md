@@ -17,3 +17,12 @@ In order to run the server, you will have to create a directory in which files w
     $ f1le 1337 cool_files
 
 Now you have f1le up and running. Congrats!
+
+# TODO
+
+Here are some things which need to get done before this is finished:
+
+ * Click to choose file
+ * Better alert dialogs (don't use `window.alert` and `window.confirm`)
+ * Show the amount of free space on the destination volume if possible
+ * Temporary upload access
