@@ -82,6 +82,7 @@
   function Pentagons(canvas, count) {
     this.canvas = canvas;
     this.movingPentagons = [];
+    this.grayHeight = 0;
     
     // Generate some pentagons to start
     for (var i = 0; i < (count || 18); ++i) {
@@ -103,6 +104,11 @@
     
     context.clearRect(0, 0, width, height);
     
+    context.fillStyle = '#65bcd4';
+    context.fillRect(0, 0, width, height - this.grayHeight);
+    context.fillStyle = '#f1f2f2';
+    context.fillRect(0, height - this.grayHeight, width, this.grayHeight);
+    
     // Animate and draw the pentagons
     for (var i = 0, len = this.movingPentagons.length; i < len; ++i) {
       var p = this.movingPentagons[i];
@@ -122,7 +128,7 @@
   
   Pentagons.prototype.random = function(ignoreIdx) {
     var radius = 0.05 + (Math.pow(Math.random(), 15)+1.0)*0.075;
-    var opacity = Math.max((Math.random()-0.1)*0.22, 0.0);
+    var opacity = Math.max((Math.random()-0.1)*0.5, 0.0);
     
     if ('undefined' === typeof ignoreIdx) {
       return new Pentagon(Math.random(), Math.random(), radius,

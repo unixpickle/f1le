@@ -7,11 +7,12 @@ html, body {
 body {
   margin: 0;
   padding: 0;
-  background-color: #65bcd4;
+  background-color: #f1f1f1;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 #pentagons {
+  z-index: -1;
   pointer-events: none;
   position: fixed;
   left: 0;
