@@ -41,15 +41,20 @@ body {
 }
 
 .file-name {
+  float: left;
   display: inline-block;
   font-weight: bold;
-  margin-right: 5px;
+  margin-right: 10px;
   
   /* Dot out names that are too long. */
   max-width: 200px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.file-size {
+  float: left;
 }
 
 .download {
@@ -66,15 +71,23 @@ body {
 }
 
 .delete {
-  border: none;
-  width: 20px;
-  height: 20px;
+  position: relative;
+  top: -12px;
   margin-left: 10px;
+  width: 32px;
+  height: 32px;
+  
+  border: none;
   background-color: transparent;
   background-image: url('../images/delete.png');
-  background-size: 20px 20px;
+  background-size: 32px 32px;
+  
   visibility: hidden;
   pointer-events: none;
+}
+
+.delete:focus {
+  outline: 0;
 }
 
 .file:hover .delete {
