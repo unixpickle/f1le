@@ -26,8 +26,8 @@
     })
   };
   
-  Files.prototype.download = function(e) {
-    
+  Files.prototype.download = function(id) {
+    window.location = '/get/' + id;
   };
   
   $(function() {

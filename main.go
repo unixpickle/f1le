@@ -13,6 +13,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -63,7 +64,7 @@ func main() {
 
 	// Setup the server
 	http.HandleFunc("/delete/", HandleDelete)
-	http.HandleFunc("/download/", HandleDownload)
+	http.HandleFunc("/get/", HandleDownload)
 	http.HandleFunc("/files", HandleFiles)
 	http.HandleFunc("/login", HandleLogin)
 	http.HandleFunc("/upload", HandleUpload)
@@ -129,11 +130,9 @@ func HandleDelete(w http.ResponseWriter, r *http.Request) {
 	
 	// Get the input ID
 	id := r.URL.Path[8:]
-	for _, ch := range id {
-		if (ch < 'a' || ch > 'z') && (ch < '0' || ch > '9') {
-			log.Print("Invalid delete request: ", id)
-			return
-		}
+	if !ValidateId(id) {
+		log.Print("Invalid delete request: ", id)
+		return
 	}
 	
 	log.Print("Deleting: ", id)
@@ -160,7 +159,49 @@ func HandleDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
+	// Get the input ID
+	id := r.URL.Path[5:]
+	for !ValidateId(id) {
+		log.Print("Invalid download ID: ", id)
+		http.NotFound(w, r)
+		return
+	}
 	
+	log.Print("Downloading: ", id)
+	
+	DbLock.RLock()
+	defer DbLock.RUnlock()
+	
+	// Find the file in the database
+	var file File
+	found := false
+	for _, f := range Database.Files {
+		if f.Id == id {
+			found = true
+			file = f
+		}
+	}
+	if !found {
+		log.Print("Not found for download: ", id)
+		http.NotFound(w, r)
+		return
+	}
+	
+	// Open the file
+	f, err := os.Open(filepath.Join(RootPath, id))
+	if err != nil {
+		log.Print("Failed to open file for: ", id)
+		http.NotFound(w, r)
+		return
+	}
+	defer f.Close()
+	
+	// Set the headers and write the file
+	w.Header().Set("Content-Disposition", "attachment; filename=" +
+		url.QueryEscape(file.Name))
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Length", strconv.FormatInt(file.Size, 10))
+	io.Copy(w, f)
 }
 
 func HandleFiles(w http.ResponseWriter, r *http.Request) {
@@ -335,4 +376,13 @@ func UploadStream(original string, r io.Reader) (string, error) {
 	} else {
 		return fileId, nil
 	}
+}
+
+func ValidateId(id string) bool {
+	for _, ch := range id {
+		if (ch < 'a' || ch > 'z') && (ch < '0' || ch > '9') {
+			return false
+		}
+	}
+	return true
 }
