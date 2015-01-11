@@ -89,7 +89,6 @@
         alert('it failed');
       } else {
         // It worked, apparently.
-        alert('it worked.');
       }
     });
     xhr.addEventListener('error', function() {

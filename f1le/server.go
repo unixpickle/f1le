@@ -1,17 +1,13 @@
 package f1le
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/hoisie/mustache"
-	"io"
 	"log"
-	"math/rand"
 	"net/http"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -90,8 +86,14 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 	log.Print("Serving homepage.")
 
 	templatePath := filepath.Join(assets, "home.mustache")
-	files := []string{"hey", "there", "bro", "yo", "bo", "ho", "yoyo"}
-	template := map[string]interface{}{"files": files}
+	
+	encoded, err := json.Marshal(config.FilesCopy())
+	if err != nil {
+		log.Fatal("Failed to encode files: ", err)
+	}
+	filesStr := strings.Replace(string(encoded), "\"", "\\\"", -1)
+	
+	template := map[string]interface{}{"files": filesStr}
 	body := mustache.RenderFile(templatePath, template)
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(body))
@@ -106,34 +108,25 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	safeName := RandomString()
 	part, err := reader.NextPart()
 	if err != nil {
 		log.Print("Invalid upload: missing part")
 		w.Write([]byte("{\"error\": \"Missing part.\"}"))
 		return
 	}
-	origName := part.FileName()
-	localPath := filepath.Join(config.RootPath, safeName)
-	output, err := os.Create(localPath)
+	
+	err = config.Upload(part, part.FileName())
 	if err != nil {
-		log.Print("Invalid upload: missing part")
-		w.Write([]byte("{\"error\": \"Missing part.\"}"))
+		log.Print("Upload failed: ", err)
+		w.Write([]byte("{\"error\": \"Upload failed.\"}"));
 		return
 	}
-	io.Copy(output, part)
-	part.Close()
-	output.Close()
-	uploadLock.Lock()
-	config.Files[safeName] = origName
-	uploadLock.Unlock()
-	log.Print("Upload successful.")
-	w.Write([]byte("{}"))
-	return
-}
-
-func RandomString() string {
-	randomNumber := strconv.Itoa(rand.Int()) + strconv.Itoa(rand.Int())
-	hash := sha256.Sum256([]byte(randomNumber))
-	return hex.EncodeToString(hash[:])
+	
+	// Send back an updated array of files.
+	files := map[string]interface{}{"files": config.FilesCopy()}
+	encoded, err := json.Marshal(files)
+	if err != nil {
+		log.Fatal("Failed to encode files: ", err)
+	}
+	w.Write(encoded)
 }

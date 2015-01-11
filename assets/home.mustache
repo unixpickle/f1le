@@ -14,6 +14,10 @@
     <script src="scripts/files.js"></script>
     <script type="text/javascript">
       window.loggedIn = true;
+      if (!window.app) {
+        window.app = {};
+      }
+      window.app.loadedFiles = JSON.parse("{{{files}}}");
     </script>
   </head>
   <body>
@@ -26,11 +30,6 @@
       </div>
     </section>
     <section id="file-list">
-      {{#files}}
-      <div class="file">
-      </div>
-      <br>
-      {{/files}}
     </section>
   </body>
 </html>
