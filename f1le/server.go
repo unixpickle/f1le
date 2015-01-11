@@ -54,8 +54,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	
+	log.Print("Serving login page")
 
 	templatePath := filepath.Join(assets, "login.html")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
 	http.ServeFile(w, r, templatePath)
 }
 
@@ -73,9 +78,13 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
+	
+	log.Print("Serving homepage.")
 
 	templatePath := filepath.Join(assets, "home.mustache")
-	body := mustache.RenderFile(templatePath, map[string]interface{}{})
+	files := []string{"hey", "there", "bro", "yo", "bo", "ho", "yoyo"}
+	template := map[string]interface{}{"files": files}
+	body := mustache.RenderFile(templatePath, template)
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(body))
 }

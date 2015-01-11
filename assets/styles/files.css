@@ -1,0 +1,14 @@
+#file-list {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+}
+
+.file {
+  display: inline-block;
+  width: 600px;
+  height: 100px;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  background-color: white;
+}

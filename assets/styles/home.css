@@ -1,12 +1,19 @@
+html, body {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
   background-color: #65bcd4;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 #pentagons {
   pointer-events: none;
-  position: absolute;
+  position: fixed;
   left: 0;
   top: 0;
 }
