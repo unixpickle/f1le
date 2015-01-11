@@ -31,7 +31,7 @@
   
   BaseCircle.prototype.resize = function() {
     var smallerDim = Math.min($(window).width(), $(window).height());
-    var size = Math.max(Math.min(smallerDim-100, 500), 300);
+    var size = Math.max(Math.min(smallerDim-200, 500), 300);
     var circleTop = ($(window).height()-size) / 2;
     var circleLeft = ($(window).width()-size) / 2;
     this.circle.css({width: size, height: size, top: circleTop,

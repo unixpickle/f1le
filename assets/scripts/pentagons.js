@@ -9,6 +9,8 @@
 
 (function() {
   
+  var isFilesPage = (window.location.pathname === '/files');
+  
   function Animation(start, end, duration) {
     this.start = start;
     this.end = end;
@@ -122,7 +124,12 @@
   
   Pentagons.prototype.random = function(ignoreIdx) {
     var radius = 0.05 + (Math.pow(Math.random(), 15)+1.0)*0.075;
-    var opacity = Math.max((Math.random()-0.1)*0.22, 0.0);
+    var opacity;
+    if (isFilesPage) {
+      opacity = Math.max(Math.random()*0.7, 0.0);
+    } else {
+      opacity = Math.max((Math.random()-0.1)*0.22, 0.0);
+    }
     
     if ('undefined' === typeof ignoreIdx) {
       return new Pentagon(Math.random(), Math.random(), radius,

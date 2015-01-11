@@ -62,6 +62,8 @@ func main() {
 	}
 
 	// Setup the server
+	http.HandleFunc("/delete/", HandleDelete)
+	http.HandleFunc("/download/", HandleDownload)
 	http.HandleFunc("/files", HandleFiles)
 	http.HandleFunc("/login", HandleLogin)
 	http.HandleFunc("/upload", HandleUpload)
@@ -113,6 +115,52 @@ func FileTemplate(f File) map[string]string {
 		"size":     sizeString,
 		"icon":     "images/icons/" + icon + ".png",
 	}
+}
+
+func HandleDelete(w http.ResponseWriter, r *http.Request) {
+	if !IsAuthenticated(w, r) {
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+	
+	// Always reply with an empty JSON object.
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte("{}"))
+	
+	// Get the input ID
+	id := r.URL.Path[8:]
+	for _, ch := range id {
+		if (ch < 'a' || ch > 'z') && (ch < '0' || ch > '9') {
+			log.Print("Invalid delete request: ", id)
+			return
+		}
+	}
+	
+	log.Print("Deleting: ", id)
+	
+	DbLock.Lock()
+	defer DbLock.Unlock()
+	
+	// Remove the entry from the database
+	for i, file := range Database.Files {
+		if file.Id == id {
+			for j := i; j < len(Database.Files)-1; j++ {
+				Database.Files[j] = Database.Files[j + 1]
+			}
+			Database.Files = Database.Files[0 : len(Database.Files)-1]
+		}
+	}
+	SaveDb()
+	
+	// Remove the local file
+	if err := os.Remove(filepath.Join(RootPath, id)); err != nil {
+		log.Print("Failed to delete ", id, ": ", err)
+		return
+	}
+}
+
+func HandleDownload(w http.ResponseWriter, r *http.Request) {
+	
 }
 
 func HandleFiles(w http.ResponseWriter, r *http.Request) {
@@ -260,7 +308,8 @@ func SaveDb() error {
 }
 
 func UploadStream(original string, r io.Reader) (string, error) {
-	fileId := HashPassword(strconv.Itoa(rand.Int()) + time.Now().String())
+	key := securecookie.GenerateRandomKey(16)
+	fileId := strings.ToLower(hex.EncodeToString(key))
 	localPath := filepath.Join(RootPath, fileId)
 	output, err := os.Create(localPath)
 	if err != nil {

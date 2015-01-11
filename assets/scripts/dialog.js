@@ -8,4 +8,8 @@
     alert(e);
   };
   
-});
+  window.app.confirm = function(msg, callback) {
+    callback(confirm(msg));
+  };
+  
+})();

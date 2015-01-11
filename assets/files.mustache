@@ -6,22 +6,31 @@
     <link rel="stylesheet" type="text/css" href="styles/files.css">
     <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
     <script src="scripts/pentagons.js"></script>
+    <script src="scripts/files.js"></script>
+    <script src="scripts/dialog.js"></script>
   </head>
   <body>
     <canvas id="pentagons"></canvas>
-    {{#files}}
-    <div class="file">
-      <div class="file-contents">
-        <img class="file-icon" src="{{icon}}" />
-        <label class="file-name">{{name}}</label>
-        <label class="file-size">{{size}}</label>
-        <button class="download"
-          onclick="javascript:window.app.files.download('{{id}}')"
-          >Download</button>
+    <a id="back" href="/">Home</a>
+    <div id="files">
+      {{#files}}
+      <div class="file">
+        <input type="hidden" value="{{id}}" class="file-id">
+        <div class="file-contents">
+          <img class="file-icon" src="{{icon}}" />
+          <label class="file-name">{{name}}</label>
+          <label class="file-size">{{size}}</label>
+          <button class="download"
+            onclick="javascript:window.app.files.download('{{id}}')"
+            >Download</button>
+        </div>
+        <button class="delete"
+          onclick="javascript:window.app.files.delete('{{id}}')"></button>
       </div>
-      <button class="delete"
-        onclick="javascript:window.app.files.delete('{{id}}')"></button>
+      {{/files}}
+      {{^files}}
+      <div class="no-files">No files.</div>
+      {{/files}}
     </div>
-    {{/files}}
   </body>
 </html>
