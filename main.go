@@ -1,5 +1,27 @@
 package main
 
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
+	"github.com/hoisie/mustache"
+	"io"
+	"io/ioutil"
+	"log"
+	"math/rand"
+	"net/http"
+	"path/filepath"
+	"os"
+	"runtime"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+)
+
 type Db struct {
 	Hash  string `json:"hash"`
 	Files []File `json:"files"`
@@ -14,13 +36,15 @@ type File struct {
 
 var (
 	RootPath  string
-	AssetPath string
+	AssetsPath string
 	Store     *sessions.CookieStore
 	Database  *Db
 	DbLock    sync.RWMutex
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+	
 	if len(os.Args) != 3 {
 		log.Fatal("Usage: f1le <port> <root path>")
 	}
@@ -33,7 +57,7 @@ func main() {
 		securecookie.GenerateRandomKey(16))
 
 	// Load database
-	if err != LoadDb(); err != nil {
+	if err := LoadDb(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -83,7 +107,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		authed := (HashPassword(password) == Database.Hash)
 		DbLock.RUnlock()
 		if authed {
-			s, _ := store.Get(r, "sessid")
+			s, _ := Store.Get(r, "sessid")
 			s.Values["authenticated"] = true
 			s.Save(r, w)
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
@@ -157,7 +181,7 @@ func HashPassword(password string) string {
 	return strings.ToLower(hex.EncodeToString(hash[:]))
 }
 
-func IsAuthenticated(w http.ResponseWriter, r *http.Request) {
+func IsAuthenticated(w http.ResponseWriter, r *http.Request) bool {
 	s, _ := Store.Get(r, "sessid")
 	val, ok := s.Values["authenticated"].(bool)
 	return ok && val
@@ -167,7 +191,7 @@ func LoadDb() error {
 	dbPath := filepath.Join(RootPath, "data.json")
 	data, err := ioutil.ReadFile(dbPath)
 	if err == nil {
-		Database = &Config{}
+		Database = &Db{}
 		if err := json.Unmarshal(data, Database); err != nil {
 			return err
 		}
@@ -180,9 +204,9 @@ func LoadDb() error {
 	fmt.Scanln(&password)
 	Database = &Db{HashPassword(password), []File{}}
 	if err := SaveDb(); err != nil {
-		return nil, err
+		return err
 	}
-	return db, nil
+	return nil
 }
 
 func SaveDb() error {
@@ -213,9 +237,9 @@ func UploadStream(original string, r io.Reader) (string, error) {
 	DbLock.Lock()
 	defer DbLock.Unlock()
 	file := File{original, fileId, time.Now().UTC().Unix(), size}
-	c.Files = append([]File{file}, c.Files...)
+	Database.Files = append([]File{file}, Database.Files...)
 	if err := SaveDb(); err != nil {
-		c.Files = c.Files[1:]
+		Database.Files = Database.Files[1:]
 		os.Remove(localPath)
 		return "", err
 	} else {
