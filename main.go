@@ -1,7 +1,224 @@
 package main
 
-import "github.com/unixpickle/f1le/f1le"
+type Db struct {
+	Hash  string `json:"hash"`
+	Files []File `json:"files"`
+}
+
+type File struct {
+	Name     string `json:"name"`
+	Id       string `json:"id"`
+	Uploaded int64  `json:"uploaded"`
+	Size     int64  `json:"size"`
+}
+
+var (
+	RootPath  string
+	AssetPath string
+	Store     *sessions.CookieStore
+	Database  *Db
+	DbLock    sync.RWMutex
+)
 
 func main() {
-	f1le.Main()
+	if len(os.Args) != 3 {
+		log.Fatal("Usage: f1le <port> <root path>")
+	}
+
+	// Setup global variables
+	_, sourcePath, _, _ := runtime.Caller(0)
+	AssetsPath = filepath.Join(filepath.Dir(filepath.Dir(sourcePath)), "assets")
+	RootPath = os.Args[2]
+	Store = sessions.NewCookieStore(securecookie.GenerateRandomKey(16),
+		securecookie.GenerateRandomKey(16))
+
+	// Load database
+	if err != LoadDb(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Setup the server
+	http.HandleFunc("/files", HandleFiles)
+	http.HandleFunc("/login", HandleLogin)
+	http.HandleFunc("/upload", HandleUpload)
+	http.HandleFunc("/", HandleRoot)
+	log.Print("Attempting to listen on http://localhost:" + os.Args[1])
+	if err := http.ListenAndServe(":"+os.Args[1], nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func HandleFiles(w http.ResponseWriter, r *http.Request) {
+	if !IsAuthenticated(w, r) {
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	// We don't want their browser to cache the file list.
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	DbLock.RLock()
+	fileMaps := make([]map[string]string, len(Database.Files))
+	for i, file := range Database.Files {
+		fileMaps[i] = map[string]string{"name": file.Name, "id": file.Id,
+			"uploaded": strconv.FormatInt(file.Uploaded, 10),
+			"size":     strconv.FormatInt(file.Size, 10)}
+	}
+	DbLock.RUnlock()
+
+	template := map[string]interface{}{"files": fileMaps}
+	templatePath := filepath.Join(AssetsPath, "files.mustache")
+	body := mustache.RenderFile(templatePath, template)
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(body))
+}
+
+func HandleLogin(w http.ResponseWriter, r *http.Request) {
+	template := map[string]interface{}{"failed": false}
+	if r.Method == "POST" {
+		password := r.PostFormValue("password")
+		DbLock.RLock()
+		authed := (HashPassword(password) == Database.Hash)
+		DbLock.RUnlock()
+		if authed {
+			s, _ := store.Get(r, "sessid")
+			s.Values["authenticated"] = true
+			s.Save(r, w)
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			return
+		}
+		log.Print("Failed login attempt.")
+		template["failed"] = true
+	}
+
+	log.Print("Serving login page.")
+
+	templatePath := filepath.Join(AssetsPath, "login.mustache")
+	body := mustache.RenderFile(templatePath, template)
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(body))
+}
+
+func HandleRoot(w http.ResponseWriter, r *http.Request) {
+	// This handler will be called for all static files.
+	if r.URL.Path != "/" {
+		cleanPath := strings.Replace(r.URL.Path, "..", "", -1)
+		log.Print("Static file: ", cleanPath)
+		http.ServeFile(w, r, filepath.Join(AssetsPath, cleanPath))
+		return
+	}
+
+	if !IsAuthenticated(w, r) {
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	http.ServeFile(w, r, filepath.Join(AssetsPath, "index.html"))
+}
+
+func HandleUpload(w http.ResponseWriter, r *http.Request) {
+	if !IsAuthenticated(w, r) {
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	// This is a JSON+AJAX API.
+	w.Header().Set("Content-Type", "application/json")
+
+	// Get the multipart reader.
+	reader, err := r.MultipartReader()
+	if err != nil {
+		log.Print("Invalid upload: not multipart")
+		w.Write([]byte("{\"error\": \"Not multipart.\"}"))
+		return
+	}
+
+	// There should only be one part, and that part should contain the file.
+	part, err := reader.NextPart()
+	if err != nil {
+		log.Print("Invalid upload: missing part")
+		w.Write([]byte("{\"error\": \"Missing part.\"}"))
+		return
+	}
+
+	// Perform the upload itself.
+	if fileId, err := UploadStream(part.FileName(), part); err != nil {
+		log.Print("Upload failed: ", err)
+		w.Write([]byte("{\"error\": \"Upload failed.\"}"))
+	} else {
+		w.Write([]byte("{\"id\": \"" + fileId + "\"}"))
+	}
+}
+
+func HashPassword(password string) string {
+	hash := sha256.Sum256([]byte(password))
+	return strings.ToLower(hex.EncodeToString(hash[:]))
+}
+
+func IsAuthenticated(w http.ResponseWriter, r *http.Request) {
+	s, _ := Store.Get(r, "sessid")
+	val, ok := s.Values["authenticated"].(bool)
+	return ok && val
+}
+
+func LoadDb() error {
+	dbPath := filepath.Join(RootPath, "data.json")
+	data, err := ioutil.ReadFile(dbPath)
+	if err == nil {
+		Database = &Config{}
+		if err := json.Unmarshal(data, Database); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Create a new database my prompting them for a password.
+	fmt.Print("Please enter a new password: ")
+	var password string
+	fmt.Scanln(&password)
+	Database = &Db{HashPassword(password), []File{}}
+	if err := SaveDb(); err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func SaveDb() error {
+	if data, err := json.Marshal(Database); err != nil {
+		return err
+	} else {
+		dbPath := filepath.Join(RootPath, "data.json")
+		return ioutil.WriteFile(dbPath, data, os.FileMode(0700))
+	}
+}
+
+func UploadStream(original string, r io.Reader) (string, error) {
+	fileId := HashPassword(strconv.Itoa(rand.Int()) + time.Now().String())
+	localPath := filepath.Join(RootPath, fileId)
+	output, err := os.Create(localPath)
+	if err != nil {
+		return "", err
+	}
+
+	size, err := io.Copy(output, r)
+	output.Close()
+	if err != nil {
+		os.Remove(localPath)
+		return "", err
+	}
+
+	// Create a new File and insert it at the front of the list.
+	DbLock.Lock()
+	defer DbLock.Unlock()
+	file := File{original, fileId, time.Now().UTC().Unix(), size}
+	c.Files = append([]File{file}, c.Files...)
+	if err := SaveDb(); err != nil {
+		c.Files = c.Files[1:]
+		os.Remove(localPath)
+		return "", err
+	} else {
+		return fileId, nil
+	}
 }
