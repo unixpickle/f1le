@@ -1,22 +1,29 @@
 package f1le
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/hoisie/mustache"
+	"io"
 	"log"
+	"math/rand"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var (
-	assets string
-	config *Config
-	store  *sessions.CookieStore
+	assets     string
+	config     *Config
+	store      *sessions.CookieStore
+	uploadLock sync.Mutex
 )
 
 func Serve(port string, c *Config) error {
@@ -31,8 +38,9 @@ func Serve(port string, c *Config) error {
 	store = sessions.NewCookieStore(securecookie.GenerateRandomKey(16),
 		securecookie.GenerateRandomKey(16))
 
-	http.HandleFunc("/login", LoginHandler)
-	http.HandleFunc("/", RootHandler)
+	http.HandleFunc("/login", HandleLogin)
+	http.HandleFunc("/upload", HandleUpload)
+	http.HandleFunc("/", HandleRoot)
 	return http.ListenAndServe(":"+port, nil)
 }
 
@@ -42,7 +50,7 @@ type serverCtx struct {
 	store  *sessions.CookieStore
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		password := r.PostFormValue("password")
 		if config.CheckPassword(password) {
@@ -64,7 +72,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, templatePath)
 }
 
-func RootHandler(w http.ResponseWriter, r *http.Request) {
+func HandleRoot(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		log.Print("Static file: ", r.URL.Path)
 		// Serve file
@@ -87,4 +95,45 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 	body := mustache.RenderFile(templatePath, template)
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(body))
+}
+
+func HandleUpload(w http.ResponseWriter, r *http.Request) {
+	reader, err := r.MultipartReader()
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		log.Print("Invalid upload: not multipart")
+		w.Write([]byte("{\"error\": \"Not multipart.\"}"))
+		return
+	}
+	
+	safeName := RandomString()
+	part, err := reader.NextPart()
+	if err != nil {
+		log.Print("Invalid upload: missing part")
+		w.Write([]byte("{\"error\": \"Missing part.\"}"))
+		return
+	}
+	origName := part.FileName()
+	localPath := filepath.Join(config.RootPath, safeName)
+	output, err := os.Create(localPath)
+	if err != nil {
+		log.Print("Invalid upload: missing part")
+		w.Write([]byte("{\"error\": \"Missing part.\"}"))
+		return
+	}
+	io.Copy(output, part)
+	part.Close()
+	output.Close()
+	uploadLock.Lock()
+	config.Files[safeName] = origName
+	uploadLock.Unlock()
+	log.Print("Upload successful.")
+	w.Write([]byte("{}"))
+	return
+}
+
+func RandomString() string {
+	randomNumber := strconv.Itoa(rand.Int()) + strconv.Itoa(rand.Int())
+	hash := sha256.Sum256([]byte(randomNumber))
+	return hex.EncodeToString(hash[:])
 }

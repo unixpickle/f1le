@@ -13,6 +13,7 @@ import (
 type Config struct {
 	RootPath string `json:"-"`
 	Hash     string
+	Files    map[string]string
 }
 
 func LoadConfig(rootPath string) (*Config, error) {
@@ -21,7 +22,8 @@ func LoadConfig(rootPath string) (*Config, error) {
 	if err != nil {
 		// Create a default configuration with password "password".
 		cfg := &Config{rootPath,
-			"5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"}
+			"5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+			map[string]string{}}
 		if err := cfg.Save(); err != nil {
 			return nil, err
 		}

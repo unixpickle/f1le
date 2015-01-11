@@ -2,6 +2,7 @@
   
   var StateNormal = 'normal';
   var StateAnts = 'ants';
+  var StateUploading = 'uploading';
   
   function Circle() {
     this.border = $('#circle-border')[0];
@@ -39,6 +40,12 @@
     this.draw();
   };
   
+  Circle.prototype.borderUploading = function() {
+    this.state = StateUploading;
+    this.animationInfo = 0;
+    this.draw();
+  };
+  
   Circle.prototype.draw = function() {
     var ctx = this.border.getContext('2d');
     var size = this.border.width;
@@ -73,6 +80,8 @@
           false);
         ctx.stroke();
       }
+    } else if (this.state === StateUploading) {
+      
     }
   };
   
