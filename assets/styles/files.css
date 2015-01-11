@@ -5,15 +5,20 @@ body {
 
 #back {
   display: inline-block;
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   background-color: transparent;
-  background-image: url('../images/uparrow.png');
-  background-size: 64px 64px;
+  background-image: url('../images/logoicon.png');
+  background-size: 100% 100%;
   cursor: pointer;
   line-height: 0; 
   font-size: 0;
-  color: transparent; 
+  color: transparent;
+  opacity: 0.8;
+}
+
+#back:hover {
+  opacity: 1;
 }
 
 .file {
@@ -62,11 +67,14 @@ body {
   width: 120px;
   float: right;
   
-  border: none;
-  background-color: #71e586;
-  color: white;
+  text-decoration: none;
+  text-align: center;
   font-family: inherit;
   font-size: 16px;
+  color: white;
+  
+  border: none;
+  background-color: #71e586;
   cursor: pointer;
 }
 
@@ -97,6 +105,7 @@ body {
 }
 
 .no-files {
+  margin-top: 50px;
   text-align: center;
   font-size: 40px;
   font-style: italic;

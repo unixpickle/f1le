@@ -16,17 +16,23 @@
 #files-link {
   display: block;
   position: absolute;
-  bottom: 0;
-  left: calc(50% - 32px);
+  bottom: 10px;
+  left: calc(50% - 50px);
   
-  width: 64px;
-  height: 64px;
+  width: 100px;
+  height: 100px;
   background-color: transparent;
-  background-image: url('../images/downarrow.png');
-  background-size: 64px 64px;
+  background-image: url('../images/logoicon.png');
+  background-size: 100% 100%;
   cursor: pointer;
+  
+  opacity: 0.8;
   
   line-height: 0; 
   font-size: 0;
   color: transparent; 
+}
+
+#files-link:hover {
+  opacity: 1;
 }

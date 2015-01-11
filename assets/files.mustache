@@ -20,9 +20,7 @@
           <img class="file-icon" src="{{icon}}" />
           <label class="file-name">{{name}}</label>
           <label class="file-size">{{size}}</label>
-          <button class="download"
-            onclick="javascript:window.app.files.download('{{id}}')"
-            >Download</button>
+          <a class="download" href="/get/{{id}}">Download</a>
         </div>
         <button class="delete"
           onclick="javascript:window.app.files.delete('{{id}}')"></button>

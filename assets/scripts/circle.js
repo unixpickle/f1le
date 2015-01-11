@@ -83,6 +83,23 @@
       }
     } else if (this.state === StateUploading) {
       this.statusField.text(Math.floor(this.animationInfo*100) + '%');
+      
+      var doneAngle = this.animationInfo*2*Math.PI - Math.PI/2;
+      
+      // Draw background
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size/2-thickness/2, doneAngle, Math.PI*2.5,
+        false);
+      ctx.lineWidth = thickness;
+      ctx.strokeStyle = '#d7d7d7';
+      ctx.stroke();
+      
+      // Draw progress
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size/2-thickness/2, -Math.PI/2, doneAngle, false);
+      ctx.lineWidth = thickness*1.1;
+      ctx.strokeStyle = '#79a5b2';
+      ctx.stroke();
     }
   };
   
