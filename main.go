@@ -13,8 +13,8 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -35,23 +35,23 @@ type File struct {
 }
 
 var (
-	RootPath  string
+	RootPath   string
 	AssetsPath string
-	Store     *sessions.CookieStore
-	Database  *Db
-	DbLock    sync.RWMutex
+	Store      *sessions.CookieStore
+	Database   *Db
+	DbLock     sync.RWMutex
 )
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	
+
 	if len(os.Args) != 3 {
 		log.Fatal("Usage: f1le <port> <root path>")
 	}
 
 	// Setup global variables
 	_, sourcePath, _, _ := runtime.Caller(0)
-	AssetsPath = filepath.Join(filepath.Dir(filepath.Dir(sourcePath)), "assets")
+	AssetsPath = filepath.Join(filepath.Dir(sourcePath), "assets")
 	RootPath = os.Args[2]
 	Store = sessions.NewCookieStore(securecookie.GenerateRandomKey(16),
 		securecookie.GenerateRandomKey(16))
@@ -72,6 +72,49 @@ func main() {
 	}
 }
 
+func FileTemplate(f File) map[string]string {
+	// Compute a human-readable file size
+	var sizeString string
+	if f.Size < 1024 {
+		sizeString = strconv.FormatInt(f.Size, 10) + " bytes"
+	} else if f.Size < 1048576 {
+		sizeString = strconv.FormatInt(f.Size/1024, 10) + " KiB"
+	} else if f.Size < 1073741824 {
+		sizeString = strconv.FormatInt(f.Size/1048576, 10) + " MiB"
+	} else {
+		sizeString = strconv.FormatInt(f.Size/1073741824, 10) + " GiB"
+	}
+	
+	// Create a human-readable date
+	t := time.Unix(f.Uploaded, 0)
+	dateString := strconv.Itoa(int(t.Month())) + "/" + strconv.Itoa(t.Day()) +
+		"/" + strconv.Itoa(t.Year())
+	
+	// Find the appropriate image
+	icon := "unknown"
+	icons := map[string]string{
+		"png":  "image",
+		"jpg":  "image",
+		"jpeg": "image",
+		"gif":  "image",
+	}
+	lowerName := strings.ToLower(f.Name)
+	for ext, img := range icons {
+		if strings.HasSuffix(lowerName, "." + ext) {
+			icon = img
+			break
+		}
+	}
+	
+	return map[string]string{
+		"name":     f.Name,
+		"id":       f.Id,
+		"uploaded": dateString,
+		"size":     sizeString,
+		"icon":     "images/icons/" + icon + ".png",
+	}
+}
+
 func HandleFiles(w http.ResponseWriter, r *http.Request) {
 	if !IsAuthenticated(w, r) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
@@ -86,9 +129,7 @@ func HandleFiles(w http.ResponseWriter, r *http.Request) {
 	DbLock.RLock()
 	fileMaps := make([]map[string]string, len(Database.Files))
 	for i, file := range Database.Files {
-		fileMaps[i] = map[string]string{"name": file.Name, "id": file.Id,
-			"uploaded": strconv.FormatInt(file.Uploaded, 10),
-			"size":     strconv.FormatInt(file.Size, 10)}
+		fileMaps[i] = FileTemplate(file)
 	}
 	DbLock.RUnlock()
 

@@ -5,15 +5,14 @@
   var StateUploading = 'uploading';
   
   function Circle() {
-    this.border = $('#circle-border')[0];
-    this.circle = $('#circle');
-    this.logo = $('#circle-logo');
+    window.app.BaseCircle.call(this);
     this.state = StateNormal;
     this.animationInfo = null;
     this.animateInterval = null;
-    $(window).resize(this.resize.bind(this));
-    this.resize();
+    this.draw();
   }
+  
+  Circle.prototype = Object.create(window.app.BaseCircle.prototype);
   
   Circle.prototype.borderAnts = function() {
     if (this.state === StateAnts) {
@@ -47,11 +46,14 @@
   };
   
   Circle.prototype.draw = function() {
+    if (this.state === StateNormal) {
+      window.app.BaseCircle.prototype.draw.call(this);
+      return;
+    }
+    
     var ctx = this.border.getContext('2d');
     var size = this.border.width;
-    var scale = this.border.width / $(this.border).width();
-    
-    var thickness = 10*scale*(size/500);
+    var thickness = this.borderThickness();
     
     ctx.clearRect(0, 0, size, size);
     
@@ -62,12 +64,7 @@
     ctx.fill();
     
     ctx.strokeStyle = '#d7d7d7';
-    if (this.state === StateNormal) {
-      ctx.beginPath();
-      ctx.arc(size/2, size/2, size/2-thickness/2, 0, 2*Math.PI, false);
-      ctx.lineWidth = thickness;
-      ctx.stroke();
-    } else if (this.state === StateAnts) {
+    if (this.state === StateAnts) {
       var runningTime = (new Date()).getTime() - this.animationInfo;
       var angle = (runningTime/3000) % (Math.PI*2);
       var antCount = 20;
@@ -81,29 +78,12 @@
         ctx.stroke();
       }
     } else if (this.state === StateUploading) {
-      
+      // TODO: this
     }
-  };
-  
-  Circle.prototype.resize = function() {
-    var smallerDim = Math.min($(window).width(), $(window).height());
-    var size = Math.max(Math.min(smallerDim-100, 500), 300);
-    var circleTop = ($(window).height()-size) / 2;
-    var circleLeft = ($(window).width()-size) / 2;
-    this.circle.css({width: size, height: size, top: circleTop,
-      left: circleLeft, "font-size": size/20});
-  
-    this.border.width = size;
-    this.border.height = size;
-    this.draw();
   };
   
   $(function() {
     window.app.circle = new Circle();
   });
-  
-  if (!window.app) {
-    window.app = {};
-  }
   
 })();

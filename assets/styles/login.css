@@ -1,0 +1,14 @@
+#password {
+  position: absolute;
+  font-size: 1em;
+  top: 10em;
+  left: 4em;
+  width: 11em;
+  height: 2em;
+  border-radius: 0.5em;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  color: #777;
+}

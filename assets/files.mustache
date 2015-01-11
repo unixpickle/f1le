@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <title>f1le - files</title>
+    <link rel="stylesheet" type="text/css" href="styles/shared.css">
+    <link rel="stylesheet" type="text/css" href="styles/files.css">
+    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="scripts/pentagons.js"></script>
+  </head>
+  <body>
+    <canvas id="pentagons"></canvas>
+    {{#files}}
+    <div class="file">
+      <div class="file-contents">
+        <img class="file-icon" src="{{icon}}" />
+        <label class="file-name">{{name}}</label>
+        <label class="file-size">{{size}}</label>
+        <button class="download"
+          onclick="javascript:window.app.files.download('{{id}}')"
+          >Download</button>
+      </div>
+      <button class="delete"
+        onclick="javascript:window.app.files.delete('{{id}}')"></button>
+    </div>
+    {{/files}}
+  </body>
+</html>

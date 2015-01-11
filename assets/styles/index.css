@@ -1,0 +1,14 @@
+#circle-status {
+  position: absolute;
+  font-size: 2em;
+  width: 10em;
+  top: 4.5em;
+  text-align: center;
+  color: white;
+}
+
+#upload-view {
+  position: absolute;
+  background-color: transparent;
+  width: 100%;
+}

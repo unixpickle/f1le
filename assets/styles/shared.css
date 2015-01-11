@@ -7,8 +7,8 @@ html, body {
 body {
   margin: 0;
   padding: 0;
-  background-color: #f1f1f1;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: #65bcd4;
 }
 
 #pentagons {

@@ -1,0 +1,18 @@
+#circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+#circle-border {
+  position: absolute;
+}
+
+#circle-logo {
+  position: absolute;
+  pointer-events: none;
+  top: 3em;
+  left: 6em;
+  width: 8em;
+  height: 5.0787096774em;
+}
