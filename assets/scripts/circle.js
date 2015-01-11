@@ -6,6 +6,7 @@
   
   function Circle() {
     window.app.BaseCircle.call(this);
+    this.statusField = $('#circle-status');
     this.state = StateNormal;
     this.animationInfo = null;
     this.animateInterval = null;
@@ -18,6 +19,7 @@
     if (this.state === StateAnts) {
       return;
     }
+    this.statusField.text('Drag in your file.');
     this.state = StateAnts;
     this.animationInfo = (new Date()).getTime();
     this.animateInterval = setInterval(function() {
@@ -30,6 +32,7 @@
     if (this.state === StateNormal) {
       return;
     }
+    this.statusField.text('Drag in your file.');
     this.state = StateNormal;
     this.animationInfo = null;
     if (this.animationInterval !== null) {
@@ -40,6 +43,7 @@
   };
   
   Circle.prototype.borderUploading = function() {
+    this.statusField.text('0%');
     this.state = StateUploading;
     this.animationInfo = 0;
     this.draw();
@@ -78,7 +82,7 @@
         ctx.stroke();
       }
     } else if (this.state === StateUploading) {
-      // TODO: this
+      this.statusField.text(Math.floor(this.animationInfo*100) + '%');
     }
   };
   

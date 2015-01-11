@@ -2,7 +2,7 @@
   
   function Uploads() {
     this.stopTimeout = null;
-  
+    this.uploading = false;
     this._registerEvents();
     
     $(window).resize(this.resize.bind(this));
@@ -20,6 +20,9 @@
   };
   
   Uploads.prototype.handleDragLeave = function(e) {
+    if (this.uploading) {
+      return;
+    }
     e.preventDefault();
     this.delay(function() {
       window.app.circle.borderRegular();
@@ -27,6 +30,9 @@
   };
   
   Uploads.prototype.handleDragOver = function(e) {
+    if (this.uploading) {
+      return;
+    }
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = 'copy';
     }
@@ -38,6 +44,9 @@
   };
   
   Uploads.prototype.handleDrop = function(e) {
+    if (this.uploading) {
+      return;
+    }
     if (this.stopTimeout !== null) {
       clearTimeout(this.stopTimeout);
       this.stopTimeout = null;
@@ -58,6 +67,9 @@
   };
   
   Uploads.prototype.uploadFile = function(file) {
+    this.uploading = true;
+    
+    // Create the request.
     var formData = new FormData();
     formData.append(file.name, file);
     var xhr = new XMLHttpRequest();
@@ -65,6 +77,7 @@
     
     // When it's done, we need to make sure the upload succeeded.
     xhr.addEventListener('load', function(e) {
+      this.uploading = false;
       window.app.circle.borderRegular();
       var value;
       try {
@@ -78,13 +91,14 @@
       } else {
         window.location = '/files';
       }
-    });
+    }.bind(this));
     
     // Handle basic connection errors.
     xhr.addEventListener('error', function() {
+      this.uploading = false;
       window.app.circle.borderRegular();
       window.app.errorDialog('Failed to connect to the server.');
-    });
+    }.bind(this));
     
     // Show the progress around the circle.
     xhr.upload.addEventListener('progress', function(e) {
