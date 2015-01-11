@@ -81,7 +81,7 @@ func (c *Config) Upload(input io.Reader, remoteName string) error {
 	
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	file := File{remoteName, fileId, time.Now().UTC().UnixNano(), size}
+	file := File{remoteName, fileId, time.Now().UTC().Unix(), size}
 	c.Files = append([]File{file}, c.Files...)
 	return c.Save()
 }

@@ -1,14 +1,30 @@
 #file-list {
   position: absolute;
   width: 100%;
-  text-align: center;
 }
 
 .file {
-  display: inline-block;
-  width: 600px;
-  height: 100px;
   margin-bottom: 20px;
   margin-top: 20px;
+  text-align: center;
+}
+
+.file-info {
+  display: inline-block;
+  padding: 10px 10px 10px 10px;
+  width: 600px;
   background-color: white;
+}
+
+.file-name, .file-size, .file-date {
+  float: left;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.file-name {
+  font-weight: bold;
+}
+
+.file-size, .file-date {
 }

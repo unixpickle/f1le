@@ -77,23 +77,22 @@
     xhr.open('POST', '/upload', true);
     xhr.addEventListener('load', function(e) {
       window.app.circle.borderRegular();
-      var value
+      var value;
       try {
         var value = JSON.parse(xhr.response);
       } catch (e) {
-        alert('error parsing json');
+        window.app.errorDialog('Invalid JSON data.');
         return;
       }
       if (value.error) {
-        // Well, there was an error.
-        alert('it failed');
+        window.app.errorDialog('Failed to upload: ' + value.error);
       } else {
-        // It worked, apparently.
+        window.app.files.showList(value.files);
       }
     });
     xhr.addEventListener('error', function() {
       window.app.circle.borderRegular();
-      alert('failed');
+      window.app.errorDialog('Failed to connect to the server.');
     });
     xhr.upload.addEventListener('progress', function(e) {
       if (e.lengthComputable) {
