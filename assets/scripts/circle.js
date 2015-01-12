@@ -11,6 +11,9 @@
     this.animationInfo = null;
     this.animateInterval = null;
     this.draw();
+    this.circle.click(function() {
+      window.app.uploads.pickerDialog();
+    });
   }
   
   Circle.prototype = Object.create(window.app.BaseCircle.prototype);

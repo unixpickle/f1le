@@ -1,6 +1,7 @@
 (function() {
   
   function Uploads() {
+    this.fileInput = $('#file-input');
     this.stopTimeout = null;
     this.uploading = false;
     this._registerEvents();
@@ -60,6 +61,10 @@
       window.app.circle.borderUploading();
       this.uploadFile(file);
     }
+  };
+  
+  Uploads.prototype.pickerDialog = function() {
+    this.fileInput.click();
   };
   
   Uploads.prototype.resize = function() {
@@ -128,10 +133,20 @@
       elements[i].bind('dragleave', dragLeave);
       elements[i].bind('drop', drop);
     }
+    this.fileInput.bind('change', function() {
+      var file = this.fileInput[0].files[0];
+      if (file) {
+        this.uploadFile(file);
+      }
+    }.bind(this));
   };
   
   $(function() {
-    new Uploads();
+    window.app.uploads = new Uploads();
   });
+  
+  if (!window.app) {
+    window.app = {};
+  }
   
 })();

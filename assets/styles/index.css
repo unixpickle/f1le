@@ -32,3 +32,8 @@
 #files-link:hover {
   opacity: 1;
 }
+
+#file-input {
+  position: fixed;
+  visibility: hidden;
+}
