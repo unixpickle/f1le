@@ -3,6 +3,7 @@
   function BaseCircle() {
     this.border = $('#circle-border')[0];
     this.circle = $('#circle');
+    this.bottomButton = $('#files-link');
     $(window).resize(this.resize.bind(this));
     this.resize();
   }
@@ -30,13 +31,24 @@
   };
   
   BaseCircle.prototype.resize = function() {
-    var smallerDim = Math.min($(window).width(), $(window).height());
-    var size = Math.max(Math.min(smallerDim-250, 500), 300);
-    var circleTop = ($(window).height()-size) / 2;
+    var buttonSize = 100;
+    if ($(window).height() < 600) {
+      buttonSize *= $(window).height()/600;
+      buttonSize = Math.round(Math.max(buttonSize, 1));
+    }
+    var mainHeight = $(window).height() - (buttonSize+20);
+    var smallerDim = Math.min($(window).width(), mainHeight);
+    var size = Math.max(Math.min(smallerDim-40, 500), 1);
+    
+    var circleTop = (mainHeight-size) / 2;
     var circleLeft = ($(window).width()-size) / 2;
     this.circle.css({width: size, height: size, top: circleTop,
       left: circleLeft, "font-size": size/20});
-  
+    
+    var buttonLeft = ($(window).width()-buttonSize) / 2;
+    this.bottomButton.css({width: buttonSize, height: buttonSize, bottom: 20,
+      left: buttonLeft});
+    
     this.border.width = size;
     this.border.height = size;
     this.draw();

@@ -16,11 +16,7 @@
 #files-link {
   display: block;
   position: absolute;
-  bottom: 10px;
-  left: calc(50% - 50px);
   
-  width: 100px;
-  height: 100px;
   background-color: transparent;
   background-image: url('../images/logoicon.png');
   background-size: 100% 100%;
