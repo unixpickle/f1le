@@ -52,6 +52,7 @@ func main() {
 	http.HandleFunc("/get/", HandleDownload)
 	http.HandleFunc("/files", HandleFiles)
 	http.HandleFunc("/login", HandleLogin)
+	http.HandleFunc("/logout", HandleLogout)
 	http.HandleFunc("/upload", HandleUpload)
 	http.HandleFunc("/", HandleRoot)
 	log.Print("Attempting to listen on http://localhost:" + os.Args[1])
@@ -84,6 +85,13 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	body := mustache.RenderFile(templatePath, template)
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(body))
+}
+
+func HandleLogout(w http.ResponseWriter, r *http.Request) {
+	s, _ := Store.Get(r, "sessid")
+	s.Values["authenticated"] = false
+	s.Save(r, w)
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
 func HandleRoot(w http.ResponseWriter, r *http.Request) {
