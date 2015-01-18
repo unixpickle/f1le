@@ -6,8 +6,11 @@
 
 These instructions apply to you only if you wish to run your own instance of f1le.
 
-First, you must have Go installed and configured. Next, you can download and install the f1le server as follows:
+First, you must have Go installed and configured. Next, you can download and install the f1le server and its dependencies as follows:
 
+    $ go get github.com/gorilla/securecookie
+	$ go get github.com/gorilla/sessions
+    $ go get github.com/hoisie/mustache
     $ go get github.com/unixpickle/f1le
     $ go install github.com/unixpickle/f1le
 
