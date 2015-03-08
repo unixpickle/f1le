@@ -76,7 +76,7 @@ body {
   text-decoration: none;
   
   /* Dot out names that are too long. */
-  max-width: 200px;
+  max-width: calc(100% - 250px);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
