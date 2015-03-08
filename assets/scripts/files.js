@@ -1,7 +1,6 @@
 (function() {
   
   function Files() {
-    this.element = $('#files');
   }
   
   Files.prototype.delete = function(id) {
@@ -11,7 +10,7 @@
       }
       
       // Remove the file from the DOM
-      var elements = $('.file');
+      var elements = $('.file-table');
       for (var i = 0, len = elements.length; i < len; ++i) {
         if ($(elements[i]).find('.file-id').val() == id) {
           elements[i].remove();
@@ -23,7 +22,7 @@
       }
       
       $.ajax('/delete/' + id);
-    })
+    });
   };
   
   Files.prototype.download = function(id) {

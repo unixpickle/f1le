@@ -5,8 +5,8 @@ body {
 
 #back {
   display: inline-block;
-  width: 60px;
-  height: 60px;
+  width: 100px;
+  height: 100px;
   background-color: transparent;
   background-image: url('../images/logoicon.png');
   background-size: 100% 100%;
@@ -21,23 +21,42 @@ body {
   opacity: 1;
 }
 
-.file {
-  font-size: 18px;
+#files {
+  display: inline-block;
+  width: calc(100% - 100px);
+  max-width: 900px;
+  margin-left: 50px;
+}
+
+.file-table {
   width: 100%;
-  text-align: center;
   margin-top: 20px;
   margin-bottom: 20px;
 }
 
-.file-contents {
+.file-table .close-td {
+  width: 50px;
+  text-align: right;
+}
+
+.file-table td, .file-table tr {
+  padding: 0;
+  margin: 0;
+}
+
+.file {
+  font-size: 18px;
+  width: calc(100% - 30px);
   display: inline-block;
-  width: 600px;
-  padding: 10px 10px 10px 10px;
+  text-align: center;
+  
+  padding: 15px 15px 15px 15px;
   background: white;
   text-align: left;
   line-height: 32px;
   border-radius: 5px;
-  margin-left: 42px;
+  
+  box-shadow: 2px 2px 5px rgba(144, 144, 144, 0.5);
 }
 
 .file-icon {
@@ -52,6 +71,9 @@ body {
   display: inline-block;
   font-weight: bold;
   margin-right: 10px;
+  
+  color: black;
+  text-decoration: none;
   
   /* Dot out names that are too long. */
   max-width: 200px;
@@ -82,11 +104,11 @@ body {
 }
 
 .delete {
-  position: relative;
-  top: -12px;
-  margin-left: 10px;
   width: 32px;
   height: 32px;
+  
+  margin: 0;
+  padding: 0;
   
   border: none;
   background-color: transparent;
@@ -101,7 +123,7 @@ body {
   outline: 0;
 }
 
-.file:hover .delete {
+.file-table:hover .delete {
   cursor: pointer;
   visibility: visible;
   pointer-events: auto;
@@ -112,4 +134,5 @@ body {
   text-align: center;
   font-size: 40px;
   font-style: italic;
+  color: #777;
 }
