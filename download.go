@@ -58,6 +58,25 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, f)
 }
 
+func HandleLast(w http.ResponseWriter, r *http.Request) {
+	if !IsAuthenticated(w, r) {
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+	
+	DbLock.RLock()
+	if len(Database.Files) == 0 {
+		DbLock.RUnlock()
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("<html><body>No files</body></html>"))
+		return
+	}
+	fileId := Database.Files[0].Id
+	DbLock.RUnlock()
+	
+	http.Redirect(w, r, "/get/" + fileId, http.StatusTemporaryRedirect)
+}
+
 func HandleView(w http.ResponseWriter, r *http.Request) {
 	// Get the input ID
 	id := r.URL.Path[6:]

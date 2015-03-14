@@ -54,6 +54,7 @@ func main() {
 	http.HandleFunc("/login", HandleLogin)
 	http.HandleFunc("/logout", HandleLogout)
 	http.HandleFunc("/upload", HandleUpload)
+	http.HandleFunc("/last", HandleLast)
 	http.HandleFunc("/view/", HandleView)
 	http.HandleFunc("/", HandleRoot)
 	log.Print("Attempting to listen on http://localhost:" + os.Args[1])
