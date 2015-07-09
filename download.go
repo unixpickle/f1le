@@ -5,11 +5,11 @@ import (
 	"log"
 	"mime"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"strconv"
+	"unicode"
 )
 
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
@@ -52,8 +52,8 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 
 	// Set the headers and write the file
 	w.Header().Set("Content-Disposition", "attachment; filename="+
-		url.QueryEscape(file.Name))
-	w.Header().Set("Content-Type", "application/octet-stream")
+		escapeNameForResult(file.Name))
+	w.Header().Set("Content-Type", mimeTypeForName(file.Name))
 	w.Header().Set("Content-Length", strconv.FormatInt(file.Size, 10))
 	io.Copy(w, f)
 }
@@ -63,7 +63,7 @@ func HandleLast(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
-	
+
 	DbLock.RLock()
 	if len(Database.Files) == 0 {
 		DbLock.RUnlock()
@@ -73,8 +73,8 @@ func HandleLast(w http.ResponseWriter, r *http.Request) {
 	}
 	fileId := Database.Files[0].Id
 	DbLock.RUnlock()
-	
-	http.Redirect(w, r, "/get/" + fileId, http.StatusTemporaryRedirect)
+
+	http.Redirect(w, r, "/get/"+fileId, http.StatusTemporaryRedirect)
 }
 
 func HandleView(w http.ResponseWriter, r *http.Request) {
@@ -114,17 +114,32 @@ func HandleView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer f.Close()
-	
-	// Compute the MIME type
-	ext := path.Ext(file.Name)
+
+	// Set the headers and write the file
+	w.Header().Set("Content-Disposition", "inline; filename="+
+		escapeNameForResult(file.Name))
+	w.Header().Set("Content-Type", mimeTypeForName(file.Name))
+	w.Header().Set("Content-Length", strconv.FormatInt(file.Size, 10))
+	io.Copy(w, f)
+}
+
+func escapeNameForResult(filename string) string {
+	res := ""
+	for _, ch := range filename {
+		if unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '.' {
+			res += string(ch)
+		} else {
+			res += "-"
+		}
+	}
+	return res
+}
+
+func mimeTypeForName(filename string) string {
+	ext := path.Ext(filename)
 	mimeType := mime.TypeByExtension(ext)
-	log.Print(mimeType)
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
-
-	// Set the headers and write the file
-	w.Header().Set("Content-Type", mimeType)
-	w.Header().Set("Content-Length", strconv.FormatInt(file.Size, 10))
-	io.Copy(w, f)
+	return mimeType
 }
