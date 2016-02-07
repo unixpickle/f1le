@@ -1,61 +1,28 @@
 package main
 
 import (
-	"io"
 	"log"
 	"mime"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
+	"time"
 	"unicode"
 )
 
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
-	// Get the input ID
 	id := r.URL.Path[5:]
-	for !ValidateId(id) {
-		log.Print("Invalid download ID: ", id)
+	if !serveFile(w, r, id, "attachment") {
 		http.NotFound(w, r)
-		return
 	}
+}
 
-	log.Print("Downloading: ", id)
-
-	DbLock.RLock()
-	defer DbLock.RUnlock()
-
-	// Find the file in the database
-	var file File
-	found := false
-	for _, f := range Database.Files {
-		if f.Id == id {
-			found = true
-			file = f
-		}
-	}
-	if !found {
-		log.Print("Not found for download: ", id)
+func HandleView(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Path[6:]
+	if !serveFile(w, r, id, "inline") {
 		http.NotFound(w, r)
-		return
 	}
-
-	// Open the file
-	f, err := os.Open(filepath.Join(RootPath, id))
-	if err != nil {
-		log.Print("Failed to open file for: ", id)
-		http.NotFound(w, r)
-		return
-	}
-	defer f.Close()
-
-	// Set the headers and write the file
-	w.Header().Set("Content-Disposition", "attachment; filename="+
-		escapeNameForResult(file.Name))
-	w.Header().Set("Content-Type", mimeTypeForName(file.Name))
-	w.Header().Set("Content-Length", strconv.FormatInt(file.Size, 10))
-	io.Copy(w, f)
 }
 
 func HandleLast(w http.ResponseWriter, r *http.Request) {
@@ -77,50 +44,31 @@ func HandleLast(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/get/"+fileId, http.StatusTemporaryRedirect)
 }
 
-func HandleView(w http.ResponseWriter, r *http.Request) {
-	// Get the input ID
-	id := r.URL.Path[6:]
-	for !ValidateId(id) {
-		log.Print("Invalid download ID: ", id)
-		http.NotFound(w, r)
-		return
+func serveFile(w http.ResponseWriter, r *http.Request, id, disposition string) bool {
+	if !ValidateId(id) {
+		log.Println("Invalid download ID:", id)
+		return false
 	}
 
-	log.Print("Viewing: ", id)
+	log.Println("Serving:", id)
 
-	DbLock.RLock()
-	defer DbLock.RUnlock()
-
-	// Find the file in the database
-	var file File
-	found := false
-	for _, f := range Database.Files {
-		if f.Id == id {
-			found = true
-			file = f
-		}
-	}
-	if !found {
-		log.Print("Not found for view: ", id)
-		http.NotFound(w, r)
-		return
+	file, ok := findFileForId(id)
+	if !ok {
+		return false
 	}
 
-	// Open the file
 	f, err := os.Open(filepath.Join(RootPath, id))
 	if err != nil {
-		log.Print("Failed to open file for: ", id)
-		http.NotFound(w, r)
-		return
+		log.Println("Failed to open file for:", id)
+		return false
 	}
 	defer f.Close()
 
-	// Set the headers and write the file
-	w.Header().Set("Content-Disposition", "inline; filename="+
+	w.Header().Set("Content-Disposition", disposition+"; filename="+
 		escapeNameForResult(file.Name))
-	w.Header().Set("Content-Type", mimeTypeForName(file.Name))
-	w.Header().Set("Content-Length", strconv.FormatInt(file.Size, 10))
-	io.Copy(w, f)
+	http.ServeContent(w, r, file.Name, time.Now(), f)
+
+	return true
 }
 
 func escapeNameForResult(filename string) string {
@@ -142,4 +90,17 @@ func mimeTypeForName(filename string) string {
 		mimeType = "application/octet-stream"
 	}
 	return mimeType
+}
+
+func findFileForId(id string) (file File, found bool) {
+	DbLock.RLock()
+	for _, f := range Database.Files {
+		if f.Id == id {
+			found = true
+			file = f
+			return
+		}
+	}
+	DbLock.RUnlock()
+	return
 }
