@@ -94,6 +94,7 @@ func mimeTypeForName(filename string) string {
 
 func findFileForId(id string) (file File, found bool) {
 	DbLock.RLock()
+	defer DbLock.RUnlock()
 	for _, f := range Database.Files {
 		if f.Id == id {
 			found = true
@@ -101,6 +102,5 @@ func findFileForId(id string) (file File, found bool) {
 			return
 		}
 	}
-	DbLock.RUnlock()
 	return
 }
