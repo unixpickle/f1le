@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/context"
 	"github.com/hoisie/mustache"
 )
 
@@ -48,15 +49,20 @@ func main() {
 	}
 
 	// Setup the server
-	http.HandleFunc("/delete/", HandleDelete)
-	http.HandleFunc("/get/", HandleDownload)
-	http.HandleFunc("/files", HandleFiles)
-	http.HandleFunc("/login", HandleLogin)
-	http.HandleFunc("/logout", HandleLogout)
-	http.HandleFunc("/upload", HandleUpload)
-	http.HandleFunc("/last", HandleLast)
-	http.HandleFunc("/view/", HandleView)
-	http.HandleFunc("/", HandleRoot)
+	handlers := map[string]http.HandlerFunc{
+		"/delete/": HandleDelete,
+		"/get/":    HandleDownload,
+		"/files":   HandleFiles,
+		"/login":   HandleLogin,
+		"/logout":  HandleLogout,
+		"/upload":  HandleUpload,
+		"/last":    HandleLast,
+		"/view/":   HandleView,
+		"/":        HandleRoot,
+	}
+	for path, f := range handlers {
+		http.Handle(path, context.ClearHandler(f))
+	}
 	log.Print("Attempting to listen on http://localhost:" + os.Args[1])
 	if err := http.ListenAndServe(":"+os.Args[1], nil); err != nil {
 		log.Fatal(err)
