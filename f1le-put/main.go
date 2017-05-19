@@ -122,9 +122,8 @@ func postFile(c *http.Client, u url.URL, f *os.File, name string) *http.Response
 			dieError("upload failed:", err)
 		}
 		lr := &LogReader{
-			Reader:   f,
-			HasTotal: f != os.Stdin,
-			Total:    fileSize,
+			Reader: f,
+			Total:  fileSize,
 		}
 		if _, err := io.Copy(fileWriter, lr); err != nil {
 			dieError("upload failed:", err)

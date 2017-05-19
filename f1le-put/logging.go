@@ -21,10 +21,9 @@ func dieError(args ...interface{}) {
 }
 
 type LogReader struct {
-	Reader   io.Reader
-	HasTotal bool
-	Total    int64
-	Current  int64
+	Reader  io.Reader
+	Total   int64
+	Current int64
 }
 
 func (l *LogReader) Read(out []byte) (n int, err error) {
@@ -32,7 +31,7 @@ func (l *LogReader) Read(out []byte) (n int, err error) {
 	defer PrintLock.Unlock()
 	n, err = l.Reader.Read(out)
 	l.Current += int64(n)
-	if !l.HasTotal {
+	if l.Total == 0 {
 		fmt.Fprintf(os.Stderr, "\rread %d bytes", l.Current)
 	} else {
 		fmt.Fprintf(os.Stderr, "\rread %.2f%% (%d out of %d)",
