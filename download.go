@@ -2,11 +2,9 @@ package main
 
 import (
 	"log"
-	"mime"
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 )
@@ -72,15 +70,6 @@ func serveFile(w http.ResponseWriter, r *http.Request, id, disposition string) b
 
 func dispositionHeader(disposition, filename string) string {
 	return disposition + "; filename*=UTF-8''" + url.PathEscape(filename)
-}
-
-func mimeTypeForName(filename string) string {
-	ext := path.Ext(filename)
-	mimeType := mime.TypeByExtension(ext)
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
-	return mimeType
 }
 
 func findFileForId(id string) (file File, found bool) {
