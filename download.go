@@ -4,11 +4,11 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
-	"unicode"
 )
 
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
@@ -64,23 +64,14 @@ func serveFile(w http.ResponseWriter, r *http.Request, id, disposition string) b
 	}
 	defer f.Close()
 
-	w.Header().Set("Content-Disposition", disposition+"; filename="+
-		escapeNameForResult(file.Name))
+	w.Header().Set("Content-Disposition", dispositionHeader(disposition, file.Name))
 	http.ServeContent(w, r, file.Name, time.Now(), f)
 
 	return true
 }
 
-func escapeNameForResult(filename string) string {
-	res := ""
-	for _, ch := range filename {
-		if unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '.' {
-			res += string(ch)
-		} else {
-			res += "-"
-		}
-	}
-	return res
+func dispositionHeader(disposition, filename string) string {
+	return disposition + "; filename*=UTF-8''" + url.PathEscape(filename)
 }
 
 func mimeTypeForName(filename string) string {
