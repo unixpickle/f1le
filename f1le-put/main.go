@@ -160,7 +160,22 @@ func printResponse(u url.URL, resp *http.Response) {
 
 	u.Path = "/get/" + url.PathEscape(respObj.ID)
 	fmt.Fprintln(os.Stderr, "")
-	fmt.Println(u.String())
+	printForTerminalOrPipe(u.String())
+}
+
+func printForTerminalOrPipe(data string) {
+	fi, err := os.Stdout.Stat()
+	if err != nil {
+		dieError("failed to stat stdout:", err)
+	}
+	if (fi.Mode() & os.ModeCharDevice) != 0 {
+		fmt.Println(data)
+	} else {
+		// For convenience when piping into a command like `pbcopy`,
+		// we do not write a newline so that this path can be pasted
+		// directly into part of a command.
+		fmt.Print(data)
+	}
 }
 
 func dieUsage() {
