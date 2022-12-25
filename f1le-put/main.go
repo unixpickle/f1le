@@ -104,6 +104,7 @@ func openFileOrTar(path string) (io.ReadSeekCloser, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
+	basename := filepath.Base(path)
 
 	info, err := os.Stat(path)
 	if err != nil {
@@ -115,10 +116,10 @@ func openFileOrTar(path string) (io.ReadSeekCloser, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
-		return f, filepath.Base(path), nil
+		return f, basename, nil
 	} else {
 		fmt.Fprintln(os.Stderr, "uploading directory as a TAR archive.")
-		agg, err := seektar.Tar(path, "")
+		agg, err := seektar.Tar(path, basename)
 		if err != nil {
 			return nil, "", err
 		}
@@ -126,7 +127,7 @@ func openFileOrTar(path string) (io.ReadSeekCloser, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
-		return f, filepath.Base(path) + ".tar", nil
+		return f, basename + ".tar", nil
 	}
 }
 
