@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 
 	"github.com/unixpickle/essentials"
+	"github.com/unixpickle/seektar"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 	flag.StringVar(&uploadFileName, "name", "", "upload file name")
 	flag.Parse()
 
-	var sourceFile *os.File
+	var sourceFile io.ReadSeekCloser
 
 	switch len(flag.Args()) {
 	case 0:
@@ -41,12 +42,13 @@ func main() {
 	case 1:
 		path := flag.Args()[0]
 		var err error
-		sourceFile, err = os.Open(path)
+		var basename string
+		sourceFile, basename, err = openFileOrTar(path)
 		if err != nil {
 			essentials.Die(err)
 		}
 		if uploadFileName == "" {
-			uploadFileName = filepath.Base(path)
+			uploadFileName = basename
 		}
 		defer sourceFile.Close()
 	default:
@@ -95,7 +97,40 @@ func authenticate(c *http.Client, u url.URL, password string) {
 	}
 }
 
-func postFile(c *http.Client, u url.URL, f *os.File, name string) *http.Response {
+func openFileOrTar(path string) (io.ReadSeekCloser, string, error) {
+	// Make the path absolute to get a basename for a relative path
+	// like "." or "..".
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return nil, "", err
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if !info.IsDir() {
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, "", err
+		}
+		return f, filepath.Base(path), nil
+	} else {
+		fmt.Fprintln(os.Stderr, "uploading directory as a TAR archive.")
+		agg, err := seektar.Tar(path, "")
+		if err != nil {
+			return nil, "", err
+		}
+		f, err := agg.Open()
+		if err != nil {
+			return nil, "", err
+		}
+		return f, filepath.Base(path) + ".tar", nil
+	}
+}
+
+func postFile(c *http.Client, u url.URL, f io.ReadSeeker, name string) *http.Response {
 	var fileSize int64
 	if f != os.Stdin {
 		var err error

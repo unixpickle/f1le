@@ -8,3 +8,5 @@ github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69 h1:umaj0TCQ9lWUUKy
 github.com/hoisie/mustache v0.0.0-20160804235033-6375acf62c69/go.mod h1:zdLK9ilQRSMjSeLKoZ4BqUfBT7jswTGF8zRlKEsiRXA=
 github.com/unixpickle/essentials v1.3.0 h1:H258Z5Uo1pVzFjxD2rwFWzHPN3s0J0jLs5kuxTRSfCs=
 github.com/unixpickle/essentials v1.3.0/go.mod h1:dQ1idvqrgrDgub3mfckQm7osVPzT3u9rB6NK/LEhmtQ=
+github.com/unixpickle/seektar v0.1.1 h1:5EWYyuQ6KQPRGbhbH0v+I0VWqfeCXYLV4IsTG5wT7pI=
+github.com/unixpickle/seektar v0.1.1/go.mod h1:YLunf6tFVt3s6DMjrYuHC8vq5zihqvf2OZHpRPw8fbw=
