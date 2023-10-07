@@ -8,12 +8,12 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"path/filepath"
 
 	"github.com/unixpickle/essentials"
+	"github.com/unixpickle/f1le/cliutil"
 	"github.com/unixpickle/seektar"
 )
 
@@ -21,10 +21,11 @@ func main() {
 	var uploadFileName string
 
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: f1le-put [flags] [path]\n\n"+
-			"Set F1LE_ROOT and F1LE_PASS environment variables.\n"+
-			"F1LE_ROOT is a URL, like http://localhost:1337.\n\n"+
-			"Available flags:")
+		fmt.Fprintln(os.Stderr, "Usage: f1le-put [flags] [path]")
+		fmt.Fprintln(os.Stderr, "")
+		cliutil.PrintEnvUsage()
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "Available flags:")
 		flag.PrintDefaults()
 	}
 	flag.StringVar(&uploadFileName, "name", "", "upload file name")
@@ -55,46 +56,13 @@ func main() {
 		dieUsage()
 	}
 
-	baseURL, password := readEnv()
-
-	jar, err := cookiejar.New(nil)
+	client, baseURL, err := cliutil.AuthEnvClient()
 	if err != nil {
 		dieError(err)
 	}
-	client := &http.Client{Jar: jar}
-
-	authenticate(client, *baseURL, password)
 	resp := postFile(client, *baseURL, sourceFile, uploadFileName)
 	defer resp.Body.Close()
 	printResponse(*baseURL, resp)
-}
-
-func readEnv() (baseURL *url.URL, password string) {
-	baseStr := os.Getenv("F1LE_ROOT")
-	password = os.Getenv("F1LE_PASS")
-	if baseStr == "" || password == "" {
-		dieUsage()
-	}
-	var err error
-	baseURL, err = url.Parse(baseStr)
-	if err != nil {
-		dieError("invalid F1LE_ROOT:", baseStr)
-	}
-	return
-}
-
-func authenticate(c *http.Client, u url.URL, password string) {
-	u.Path = "/login"
-	vals := url.Values{}
-	vals.Set("password", password)
-	resp, err := c.PostForm(u.String(), vals)
-	if err != nil {
-		dieError("authentication failure:", err)
-	}
-	resp.Body.Close()
-	if resp.Request.URL.Path == "/login" {
-		dieError("login failed")
-	}
 }
 
 func openFileOrTar(path string) (io.ReadSeekCloser, string, error) {
