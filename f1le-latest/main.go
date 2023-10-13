@@ -29,7 +29,7 @@ func main() {
 		outFile = os.Stdout
 	case 1:
 		path := flag.Args()[0]
-		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		essentials.Must(err)
 		outFile = f
 		defer f.Close()
