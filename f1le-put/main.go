@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -146,7 +145,7 @@ func postFile(c *http.Client, u url.URL, f io.ReadSeeker, name string) *http.Res
 }
 
 func printResponse(u url.URL, resp *http.Response) {
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		dieError("upload failed:", err)
 	}

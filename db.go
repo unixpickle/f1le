@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -16,7 +15,7 @@ var (
 
 func LoadDb() error {
 	dbPath := filepath.Join(RootPath, "data.json")
-	data, err := ioutil.ReadFile(dbPath)
+	data, err := os.ReadFile(dbPath)
 	if err == nil {
 		Database = &Db{}
 		if err := json.Unmarshal(data, Database); err != nil {
@@ -41,6 +40,6 @@ func SaveDb() error {
 		return err
 	} else {
 		dbPath := filepath.Join(RootPath, "data.json")
-		return ioutil.WriteFile(dbPath, data, os.FileMode(0700))
+		return os.WriteFile(dbPath, data, os.FileMode(0700))
 	}
 }
