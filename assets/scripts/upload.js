@@ -1,36 +1,36 @@
-(function() {
-  
+(function () {
+
   function Uploads() {
     this.fileInput = $('#file-input');
     this.stopTimeout = null;
     this.uploading = false;
     this._registerEvents();
-    
+
     $(window).resize(this.resize.bind(this));
     this.resize();
   }
-  
-  Uploads.prototype.delay = function(fn) {
+
+  Uploads.prototype.delay = function (fn) {
     if (this.stopTimeout !== null) {
       clearTimeout(this.stopTimeout);
     }
-    this.stopTimeout = setTimeout(function() {
+    this.stopTimeout = setTimeout(function () {
       this.stopTimeout = null;
       fn();
     }.bind(this), 10);
   };
-  
-  Uploads.prototype.handleDragLeave = function(e) {
+
+  Uploads.prototype.handleDragLeave = function (e) {
     if (this.uploading) {
       return;
     }
     e.preventDefault();
-    this.delay(function() {
+    this.delay(function () {
       window.app.circle.borderRegular();
     });
   };
-  
-  Uploads.prototype.handleDragOver = function(e) {
+
+  Uploads.prototype.handleDragOver = function (e) {
     if (this.uploading) {
       return;
     }
@@ -39,12 +39,12 @@
     }
     e.stopPropagation();
     e.preventDefault();
-    this.delay(function() {
+    this.delay(function () {
       window.app.circle.borderAnts();
     });
   };
-  
-  Uploads.prototype.handleDrop = function(e) {
+
+  Uploads.prototype.handleDrop = function (e) {
     if (this.uploading) {
       return;
     }
@@ -62,27 +62,42 @@
       this.uploadFile(file);
     }
   };
-  
-  Uploads.prototype.pickerDialog = function() {
+
+  Uploads.prototype.pickerDialog = function () {
     this.fileInput.click();
   };
-  
-  Uploads.prototype.resize = function() {
-    $('#upload-view').css({height: $(window).height()});
+
+  Uploads.prototype.resize = function () {
+    $('#upload-view').css({ height: $(window).height() });
   };
-  
-  Uploads.prototype.uploadFile = function(file) {
+
+  Uploads.prototype.uploadFile = function (file) {
     this.uploading = true;
     var totalSize = file && file.size ? file.size : 0;
-    
+
     // Create the request.
     var formData = new FormData();
     formData.append(file.name, file);
+
     var xhr = new XMLHttpRequest();
+
+    // Show the progress around the circle.
+    var handleProgress = function (e) {
+      var total = e.total;
+      if (!e.lengthComputable || !total) {
+        total = totalSize;
+      }
+      if (total) {
+        var percent = Math.min(e.loaded / total, 1);
+        window.app.circle.animationInfo = percent;
+        window.app.circle.draw();
+      }
+    };
+    xhr.upload.addEventListener('progress', handleProgress, false);
     xhr.open('POST', '/upload', true);
-    
+
     // When it's done, we need to make sure the upload succeeded.
-    xhr.addEventListener('load', function(e) {
+    xhr.addEventListener('load', function (e) {
       this.uploading = false;
       window.app.circle.borderRegular();
       var value;
@@ -98,44 +113,26 @@
         window.location = '/files';
       }
     }.bind(this));
-    
+
     // Handle basic connection errors.
-    xhr.addEventListener('error', function() {
+    xhr.addEventListener('error', function () {
       this.uploading = false;
       window.app.circle.borderRegular();
       window.app.errorDialog('Failed to connect to the server.');
     }.bind(this));
-    
-    // Show the progress around the circle.
-    var handleProgress = function(e) {
-      var total = e.total;
-      if (!e.lengthComputable || !total) {
-        total = totalSize;
-      }
-      if (total) {
-        var percent = Math.min(e.loaded / total, 1);
-        window.app.circle.animationInfo = percent;
-        window.app.circle.draw();
-      }
-    };
-    if (xhr.upload && xhr.upload.addEventListener) {
-      xhr.upload.addEventListener('progress', handleProgress);
-    } else {
-      xhr.addEventListener('progress', handleProgress);
-    }
-    
+
     xhr.send(formData);
   };
-  
-  Uploads.prototype._registerEvents = function() {
+
+  Uploads.prototype._registerEvents = function () {
     var elements = [$(document.body), $('#upload-view')];
-    var dragOver = function(e) {
+    var dragOver = function (e) {
       this.handleDragOver(e.originalEvent);
     }.bind(this);
-    var dragLeave = function(e) {
+    var dragLeave = function (e) {
       this.handleDragLeave(e.originalEvent);
     }.bind(this);
-    var drop = function(e) {
+    var drop = function (e) {
       this.handleDrop(e.originalEvent);
     }.bind(this);
     for (var i = 0, len = elements.length; i < len; ++i) {
@@ -143,20 +140,20 @@
       elements[i].bind('dragleave', dragLeave);
       elements[i].bind('drop', drop);
     }
-    this.fileInput.bind('change', function() {
+    this.fileInput.bind('change', function () {
       var file = this.fileInput[0].files[0];
       if (file) {
         this.uploadFile(file);
       }
     }.bind(this));
   };
-  
-  $(function() {
+
+  $(function () {
     window.app.uploads = new Uploads();
   });
-  
+
   if (!window.app) {
     window.app = {};
   }
-  
+
 })();
