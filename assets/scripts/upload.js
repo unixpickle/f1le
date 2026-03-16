@@ -73,6 +73,7 @@
   
   Uploads.prototype.uploadFile = function(file) {
     this.uploading = true;
+    var totalSize = file && file.size ? file.size : 0;
     
     // Create the request.
     var formData = new FormData();
@@ -106,13 +107,22 @@
     }.bind(this));
     
     // Show the progress around the circle.
-    xhr.upload.addEventListener('progress', function(e) {
-      if (e.lengthComputable) {
-        var percent = e.loaded / e.total;
+    var handleProgress = function(e) {
+      var total = e.total;
+      if (!e.lengthComputable || !total) {
+        total = totalSize;
+      }
+      if (total) {
+        var percent = Math.min(e.loaded / total, 1);
         window.app.circle.animationInfo = percent;
         window.app.circle.draw();
       }
-    });
+    };
+    if (xhr.upload && xhr.upload.addEventListener) {
+      xhr.upload.addEventListener('progress', handleProgress);
+    } else {
+      xhr.addEventListener('progress', handleProgress);
+    }
     
     xhr.send(formData);
   };
