@@ -74,57 +74,111 @@
   Uploads.prototype.uploadFile = function(file) {
     this.uploading = true;
     var totalSize = file && file.size ? file.size : 0;
-    
-    // Create the request.
-    var formData = new FormData();
-    formData.append(file.name, file);
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/upload', true);
-    
-    // When it's done, we need to make sure the upload succeeded.
-    xhr.addEventListener('load', function(e) {
+
+    var handleProgress = function(loaded, total) {
+      if (total) {
+        var percent = Math.min(loaded / total, 1);
+        window.app.circle.animationInfo = percent;
+        window.app.circle.draw();
+      }
+    };
+
+    var handleResponse = function(value) {
       this.uploading = false;
       window.app.circle.borderRegular();
-      var value;
-      try {
-        var value = JSON.parse(xhr.response);
-      } catch (e) {
-        window.app.errorDialog('Invalid JSON data.');
-        return;
-      }
       if (value.error) {
         window.app.errorDialog('Failed to upload: ' + value.error);
       } else {
         window.location = '/files';
       }
-    }.bind(this));
-    
-    // Handle basic connection errors.
-    xhr.addEventListener('error', function() {
+    }.bind(this);
+
+    var handleError = function(message) {
       this.uploading = false;
       window.app.circle.borderRegular();
-      window.app.errorDialog('Failed to connect to the server.');
-    }.bind(this));
-    
-    // Show the progress around the circle.
-    var handleProgress = function(e) {
-      var total = e.total;
-      if (!e.lengthComputable || !total) {
-        total = totalSize;
-      }
-      if (total) {
-        var percent = Math.min(e.loaded / total, 1);
-        window.app.circle.animationInfo = percent;
-        window.app.circle.draw();
-      }
-    };
-    if (xhr.upload && xhr.upload.addEventListener) {
-      xhr.upload.addEventListener('progress', handleProgress);
-    } else {
-      xhr.addEventListener('progress', handleProgress);
+      window.app.errorDialog(message);
+    }.bind(this);
+
+    // Create a multipart request body so we can report progress.
+    var canStream = !!(window.ReadableStream && file && file.stream);
+    if (canStream) {
+      var boundary = '----f1le-boundary-' + Math.random().toString(16).slice(2);
+      var safeName = file.name.replace(/"/g, '\\"');
+      var contentType = file.type || 'application/octet-stream';
+      var header = '--' + boundary + '\r\n' +
+        'Content-Disposition: form-data; name="' + safeName + '"; filename="' +
+        safeName + '"\r\n' +
+        'Content-Type: ' + contentType + '\r\n\r\n';
+      var footer = '\r\n--' + boundary + '--\r\n';
+      var encoder = new TextEncoder();
+      var headerBytes = encoder.encode(header);
+      var footerBytes = encoder.encode(footer);
+      var total = headerBytes.byteLength + file.size + footerBytes.byteLength;
+      var loaded = headerBytes.byteLength;
+
+      handleProgress(loaded, total);
+
+      var stream = new ReadableStream({
+        start: function(controller) {
+          controller.enqueue(headerBytes);
+          var reader = file.stream().getReader();
+          var pump = function() {
+            return reader.read().then(function(result) {
+              if (result.done) {
+                loaded += footerBytes.byteLength;
+                handleProgress(loaded, total);
+                controller.enqueue(footerBytes);
+                controller.close();
+                return;
+              }
+              loaded += result.value.byteLength;
+              handleProgress(loaded, total);
+              controller.enqueue(result.value);
+              return pump();
+            }).catch(function(err) {
+              controller.error(err);
+            });
+          };
+          return pump();
+        }
+      });
+
+      fetch('/upload', {
+        method: 'POST',
+        headers: {'Content-Type': 'multipart/form-data; boundary=' + boundary},
+        body: stream,
+        duplex: 'half'
+      }).then(function(response) {
+        return response.json().catch(function() {
+          throw new Error('Invalid JSON data.');
+        });
+      }).then(handleResponse).catch(function(err) {
+        if (err && err.message === 'Invalid JSON data.') {
+          handleError(err.message);
+        } else {
+          handleError('Failed to connect to the server.');
+        }
+      });
+      return;
     }
-    
-    xhr.send(formData);
+
+    // Fallback: send FormData without progress.
+    var formData = new FormData();
+    formData.append(file.name, file);
+    fetch('/upload', {
+      method: 'POST',
+      body: formData
+    }).then(function(response) {
+      return response.json().catch(function() {
+        throw new Error('Invalid JSON data.');
+      });
+    }).then(handleResponse).catch(function(err) {
+      if (err && err.message === 'Invalid JSON data.') {
+        handleError(err.message);
+      } else {
+        handleError('Failed to connect to the server.');
+      }
+    });
   };
   
   Uploads.prototype._registerEvents = function() {
