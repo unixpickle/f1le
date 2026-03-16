@@ -143,6 +143,7 @@
     this.fileInput.bind('change', function () {
       var file = this.fileInput[0].files[0];
       if (file) {
+        window.app.circle.borderUploading();
         this.uploadFile(file);
       }
     }.bind(this));
