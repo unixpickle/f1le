@@ -22,7 +22,7 @@
     if (this.state === StateAnts) {
       return;
     }
-    this.statusField.text('Drag in your file.');
+    this.statusField.text('Drag in your files.');
     this.state = StateAnts;
     this.animationInfo = (new Date()).getTime();
     this.animateInterval = setInterval(function() {
@@ -35,7 +35,7 @@
     if (this.state === StateNormal) {
       return;
     }
-    this.statusField.text('Drag in your file.');
+    this.statusField.text('Drag in your files.');
     this.state = StateNormal;
     this.animationInfo = null;
     if (this.animationInterval !== null) {
