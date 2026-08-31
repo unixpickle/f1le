@@ -21,6 +21,19 @@ In order to run the server, you will have to create a directory in which files w
 
 Now you have f1le up and running. Congrats!
 
+## Docker
+
+You can build/run this with Docker. If you have Docker installed and running  
+simply download the Dockerfile to a directory, cd there, and build the image:
+
+    docker build -t f1le .
+
+Then run it:
+
+    docker run -it -p 8080:8080 f1le
+
+You will be prompted for a password.
+
 # TODO
 
 Here are some things which need to get done before this is finished:
